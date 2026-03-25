@@ -10,13 +10,13 @@ import (
 )
 
 type mockAuthorRepo struct {
-	findByName          func(ctx context.Context, name string) ([]domain.Author, error)
+	findByName          func(ctx context.Context, name string, limit, offset int) ([]domain.Author, error)
 	findByID            func(ctx context.Context, id string) (domain.Author, error)
 	findBooksByAuthorID func(ctx context.Context, authorID string) ([]domain.Book, error)
 }
 
-func (m *mockAuthorRepo) FindByName(ctx context.Context, name string) ([]domain.Author, error) {
-	return m.findByName(ctx, name)
+func (m *mockAuthorRepo) FindByName(ctx context.Context, name string, limit, offset int) ([]domain.Author, error) {
+	return m.findByName(ctx, name, limit, offset)
 }
 
 func (m *mockAuthorRepo) FindByID(ctx context.Context, id string) (domain.Author, error) {
@@ -39,7 +39,7 @@ func TestSearchAuthorsByName(t *testing.T) {
 			name:  "found",
 			query: "Tolkien",
 			repo: &mockAuthorRepo{
-				findByName: func(_ context.Context, _ string) ([]domain.Author, error) {
+				findByName: func(_ context.Context, _ string, _, _ int) ([]domain.Author, error) {
 					return []domain.Author{{ID: "1", Name: "J.R.R. Tolkien"}}, nil
 				},
 			},
@@ -49,7 +49,7 @@ func TestSearchAuthorsByName(t *testing.T) {
 			name:  "empty",
 			query: "nobody",
 			repo: &mockAuthorRepo{
-				findByName: func(_ context.Context, _ string) ([]domain.Author, error) {
+				findByName: func(_ context.Context, _ string, _, _ int) ([]domain.Author, error) {
 					return nil, nil
 				},
 			},
@@ -59,7 +59,7 @@ func TestSearchAuthorsByName(t *testing.T) {
 			name:  "repo error",
 			query: "Tolkien",
 			repo: &mockAuthorRepo{
-				findByName: func(_ context.Context, _ string) ([]domain.Author, error) {
+				findByName: func(_ context.Context, _ string, _, _ int) ([]domain.Author, error) {
 					return nil, errors.New("db down")
 				},
 			},
@@ -70,7 +70,7 @@ func TestSearchAuthorsByName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			uc := author.NewSearchAuthorsByName(tt.repo)
-			got, err := uc.Execute(context.Background(), tt.query)
+			got, err := uc.Execute(context.Background(), tt.query, 20, 0)
 			if tt.wantErr {
 				if err == nil {
 					t.Fatal("expected error, got nil")

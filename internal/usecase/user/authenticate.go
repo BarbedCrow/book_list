@@ -2,13 +2,9 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
-)
 
-var (
-	ErrUserNotFound  = errors.New("user not found")
-	ErrWrongPassword = errors.New("wrong password")
+	"github.com/BarbedCrow/book_list/internal/domain"
 )
 
 type AuthenticateUser struct {
@@ -28,7 +24,7 @@ func (uc *AuthenticateUser) Execute(ctx context.Context, email, password string)
 	}
 
 	if err := uc.hasher.Verify(u.PasswordHash, password); err != nil {
-		return "", fmt.Errorf("authenticate user: %w", ErrWrongPassword)
+		return "", fmt.Errorf("authenticate user: %w", domain.ErrWrongPassword)
 	}
 
 	token, err := uc.tokens.Generate(u.ID)

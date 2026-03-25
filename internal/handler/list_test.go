@@ -9,7 +9,6 @@ import (
 
 	"github.com/BarbedCrow/book_list/internal/domain"
 	"github.com/BarbedCrow/book_list/internal/handler"
-	listuc "github.com/BarbedCrow/book_list/internal/usecase/list"
 )
 
 type mockListCreator struct {
@@ -129,7 +128,7 @@ func TestListHandler_AddBook(t *testing.T) {
 			name:   "not owner",
 			userID: "u2",
 			adder: &mockListBookAdder{
-				execute: func(_ context.Context, _, _, _ string) error { return listuc.ErrNotOwner },
+				execute: func(_ context.Context, _, _, _ string) error { return domain.ErrNotOwner },
 			},
 			wantStatus: http.StatusForbidden,
 		},

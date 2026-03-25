@@ -9,15 +9,14 @@ import (
 
 	"github.com/BarbedCrow/book_list/internal/domain"
 	"github.com/BarbedCrow/book_list/internal/handler"
-	bookuc "github.com/BarbedCrow/book_list/internal/usecase/book"
 )
 
 type mockBookSearcher struct {
-	execute func(ctx context.Context, title string) ([]domain.Book, error)
+	execute func(ctx context.Context, title string, limit, offset int) ([]domain.Book, error)
 }
 
-func (m *mockBookSearcher) Execute(ctx context.Context, title string) ([]domain.Book, error) {
-	return m.execute(ctx, title)
+func (m *mockBookSearcher) Execute(ctx context.Context, title string, limit, offset int) ([]domain.Book, error) {
+	return m.execute(ctx, title, limit, offset)
 }
 
 type mockBookDetailer struct {
@@ -40,7 +39,7 @@ func TestBookHandler_Search(t *testing.T) {
 			name:  "success",
 			query: "?title=Go",
 			searcher: &mockBookSearcher{
-				execute: func(_ context.Context, _ string) ([]domain.Book, error) {
+				execute: func(_ context.Context, _ string, _, _ int) ([]domain.Book, error) {
 					return []domain.Book{{ID: "1", Title: "Go Programming"}}, nil
 				},
 			},
@@ -51,7 +50,7 @@ func TestBookHandler_Search(t *testing.T) {
 			name:  "empty result",
 			query: "?title=nothing",
 			searcher: &mockBookSearcher{
-				execute: func(_ context.Context, _ string) ([]domain.Book, error) {
+				execute: func(_ context.Context, _ string, _, _ int) ([]domain.Book, error) {
 					return nil, nil
 				},
 			},
@@ -109,7 +108,7 @@ func TestBookHandler_GetDetails(t *testing.T) {
 			id:   "999",
 			detailer: &mockBookDetailer{
 				execute: func(_ context.Context, _ string) (domain.Book, error) {
-					return domain.Book{}, bookuc.ErrBookNotFound
+					return domain.Book{}, domain.ErrBookNotFound
 				},
 			},
 			wantStatus: http.StatusNotFound,

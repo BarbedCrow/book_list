@@ -41,7 +41,7 @@ func TestAuthenticateUser(t *testing.T) {
 			pass:  "secret",
 			repo: &mockUserRepo{
 				findByEmail: func(_ context.Context, _ string) (domain.User, error) {
-					return domain.User{}, user.ErrUserNotFound
+					return domain.User{}, domain.ErrUserNotFound
 				},
 			},
 			hasher:  &mockHasher{},

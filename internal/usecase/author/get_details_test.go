@@ -32,7 +32,7 @@ func TestGetAuthorDetails(t *testing.T) {
 			id:   "999",
 			repo: &mockAuthorRepo{
 				findByID: func(_ context.Context, _ string) (domain.Author, error) {
-					return domain.Author{}, author.ErrAuthorNotFound
+					return domain.Author{}, domain.ErrAuthorNotFound
 				},
 			},
 			wantErr: true,

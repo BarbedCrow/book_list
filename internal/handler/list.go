@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/BarbedCrow/book_list/internal/domain"
-	listuc "github.com/BarbedCrow/book_list/internal/usecase/list"
 )
 
 type ListCreator interface {
@@ -67,6 +66,8 @@ func (h *ListHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
 	var req createListRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
@@ -104,6 +105,8 @@ func (h *ListHandler) AddBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
 	var req listBookRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
@@ -112,11 +115,11 @@ func (h *ListHandler) AddBook(w http.ResponseWriter, r *http.Request) {
 
 	err := h.addBook.Execute(r.Context(), userID, listID, req.BookID)
 	if err != nil {
-		if errors.Is(err, listuc.ErrNotOwner) {
+		if errors.Is(err, domain.ErrNotOwner) {
 			writeError(w, http.StatusForbidden, "not the list owner")
 			return
 		}
-		if errors.Is(err, listuc.ErrListNotFound) {
+		if errors.Is(err, domain.ErrListNotFound) {
 			writeError(w, http.StatusNotFound, "list not found")
 			return
 		}
@@ -143,11 +146,11 @@ func (h *ListHandler) RemoveBook(w http.ResponseWriter, r *http.Request) {
 
 	err := h.removeBook.Execute(r.Context(), userID, listID, bookID)
 	if err != nil {
-		if errors.Is(err, listuc.ErrNotOwner) {
+		if errors.Is(err, domain.ErrNotOwner) {
 			writeError(w, http.StatusForbidden, "not the list owner")
 			return
 		}
-		if errors.Is(err, listuc.ErrListNotFound) {
+		if errors.Is(err, domain.ErrListNotFound) {
 			writeError(w, http.StatusNotFound, "list not found")
 			return
 		}

@@ -2,13 +2,10 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/BarbedCrow/book_list/internal/domain"
 )
-
-var ErrDuplicateEmail = errors.New("email already registered")
 
 type RegisterUser struct {
 	repo   UserRepository

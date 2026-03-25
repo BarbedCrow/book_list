@@ -9,7 +9,6 @@ import (
 
 	"github.com/BarbedCrow/book_list/internal/domain"
 	"github.com/BarbedCrow/book_list/internal/handler"
-	useruc "github.com/BarbedCrow/book_list/internal/usecase/user"
 )
 
 type mockUserRegisterer struct {
@@ -37,7 +36,7 @@ func TestUserHandler_Register(t *testing.T) {
 	}{
 		{
 			name: "success",
-			body: `{"email":"a@b.com","password":"secret"}`,
+			body: `{"email":"a@b.com","password":"secretpass"}`,
 			registerer: &mockUserRegisterer{
 				execute: func(_ context.Context, email, _ string) (domain.User, error) {
 					return domain.User{ID: "1", Email: email}, nil
@@ -53,13 +52,25 @@ func TestUserHandler_Register(t *testing.T) {
 		},
 		{
 			name: "duplicate email",
-			body: `{"email":"a@b.com","password":"secret"}`,
+			body: `{"email":"a@b.com","password":"secretpass"}`,
 			registerer: &mockUserRegisterer{
 				execute: func(_ context.Context, _, _ string) (domain.User, error) {
-					return domain.User{}, useruc.ErrDuplicateEmail
+					return domain.User{}, domain.ErrDuplicateEmail
 				},
 			},
 			wantStatus: http.StatusConflict,
+		},
+		{
+			name:       "short password",
+			body:       `{"email":"a@b.com","password":"short"}`,
+			registerer: &mockUserRegisterer{},
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "invalid email",
+			body:       `{"email":"notanemail","password":"secretpass"}`,
+			registerer: &mockUserRegisterer{},
+			wantStatus: http.StatusBadRequest,
 		},
 	}
 
@@ -105,7 +116,7 @@ func TestUserHandler_Login(t *testing.T) {
 			body: `{"email":"a@b.com","password":"wrong"}`,
 			authenticator: &mockUserAuthenticator{
 				execute: func(_ context.Context, _, _ string) (string, error) {
-					return "", useruc.ErrWrongPassword
+					return "", domain.ErrWrongPassword
 				},
 			},
 			wantStatus: http.StatusUnauthorized,

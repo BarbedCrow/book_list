@@ -32,11 +32,9 @@ func (m *mockHasher) Verify(hash, password string) error   { return m.verify(has
 
 type mockTokenProvider struct {
 	generate func(userID string) (string, error)
-	validate func(token string) (string, error)
 }
 
 func (m *mockTokenProvider) Generate(userID string) (string, error) { return m.generate(userID) }
-func (m *mockTokenProvider) Validate(token string) (string, error)  { return m.validate(token) }
 
 func TestRegisterUser(t *testing.T) {
 	tests := []struct {
@@ -63,7 +61,7 @@ func TestRegisterUser(t *testing.T) {
 			email: "a@b.com",
 			pass:  "secret",
 			repo: &mockUserRepo{
-				save: func(_ context.Context, _ domain.User) error { return user.ErrDuplicateEmail },
+				save: func(_ context.Context, _ domain.User) error { return domain.ErrDuplicateEmail },
 			},
 			hasher: &mockHasher{
 				hash: func(_ string) (string, error) { return "hashed", nil },

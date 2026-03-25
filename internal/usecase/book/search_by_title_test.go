@@ -10,12 +10,12 @@ import (
 )
 
 type mockBookRepo struct {
-	findByTitle func(ctx context.Context, title string) ([]domain.Book, error)
+	findByTitle func(ctx context.Context, title string, limit, offset int) ([]domain.Book, error)
 	findByID    func(ctx context.Context, id string) (domain.Book, error)
 }
 
-func (m *mockBookRepo) FindByTitle(ctx context.Context, title string) ([]domain.Book, error) {
-	return m.findByTitle(ctx, title)
+func (m *mockBookRepo) FindByTitle(ctx context.Context, title string, limit, offset int) ([]domain.Book, error) {
+	return m.findByTitle(ctx, title, limit, offset)
 }
 
 func (m *mockBookRepo) FindByID(ctx context.Context, id string) (domain.Book, error) {
@@ -34,7 +34,7 @@ func TestSearchBooksByTitle(t *testing.T) {
 			name:  "found",
 			title: "Go",
 			repo: &mockBookRepo{
-				findByTitle: func(_ context.Context, _ string) ([]domain.Book, error) {
+				findByTitle: func(_ context.Context, _ string, _, _ int) ([]domain.Book, error) {
 					return []domain.Book{{ID: "1", Title: "Go Programming"}}, nil
 				},
 			},
@@ -44,7 +44,7 @@ func TestSearchBooksByTitle(t *testing.T) {
 			name:  "empty",
 			title: "nonexistent",
 			repo: &mockBookRepo{
-				findByTitle: func(_ context.Context, _ string) ([]domain.Book, error) {
+				findByTitle: func(_ context.Context, _ string, _, _ int) ([]domain.Book, error) {
 					return nil, nil
 				},
 			},
@@ -54,7 +54,7 @@ func TestSearchBooksByTitle(t *testing.T) {
 			name:  "repo error",
 			title: "Go",
 			repo: &mockBookRepo{
-				findByTitle: func(_ context.Context, _ string) ([]domain.Book, error) {
+				findByTitle: func(_ context.Context, _ string, _, _ int) ([]domain.Book, error) {
 					return nil, errors.New("db down")
 				},
 			},
@@ -65,7 +65,7 @@ func TestSearchBooksByTitle(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			uc := book.NewSearchBooksByTitle(tt.repo)
-			got, err := uc.Execute(context.Background(), tt.title)
+			got, err := uc.Execute(context.Background(), tt.title, 20, 0)
 			if tt.wantErr {
 				if err == nil {
 					t.Fatal("expected error, got nil")

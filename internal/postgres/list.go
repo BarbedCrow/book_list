@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/BarbedCrow/book_list/internal/domain"
-	listuc "github.com/BarbedCrow/book_list/internal/usecase/list"
 )
 
 type ListRepo struct {
@@ -56,7 +55,7 @@ func (r *ListRepo) FindByID(ctx context.Context, id string) (domain.List, error)
 		GROUP BY l.id, l.owner_id, l.name, l.type
 	`, id).Scan(&l.ID, &l.OwnerID, &l.Name, &l.Type, &l.Books)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.List{}, listuc.ErrListNotFound
+		return domain.List{}, domain.ErrListNotFound
 	}
 	if err != nil {
 		return domain.List{}, fmt.Errorf("list find by id: %w", err)
@@ -66,8 +65,7 @@ func (r *ListRepo) FindByID(ctx context.Context, id string) (domain.List, error)
 
 func (r *ListRepo) Save(ctx context.Context, l domain.List) error {
 	_, err := r.pool.Exec(ctx,
-		`INSERT INTO lists (id, owner_id, name, type) VALUES ($1, $2, $3, $4)
-		 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, type = EXCLUDED.type`,
+		`INSERT INTO lists (id, owner_id, name, type) VALUES ($1, $2, $3, $4)`,
 		l.ID, l.OwnerID, l.Name, string(l.Type),
 	)
 	if err != nil {

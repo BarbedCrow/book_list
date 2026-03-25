@@ -7,6 +7,6 @@ import (
 )
 
 type BookRepository interface {
-	FindByTitle(ctx context.Context, title string) ([]domain.Book, error)
+	FindByTitle(ctx context.Context, title string, limit, offset int) ([]domain.Book, error)
 	FindByID(ctx context.Context, id string) (domain.Book, error)
 }

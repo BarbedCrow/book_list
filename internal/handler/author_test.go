@@ -9,15 +9,14 @@ import (
 
 	"github.com/BarbedCrow/book_list/internal/domain"
 	"github.com/BarbedCrow/book_list/internal/handler"
-	authoruc "github.com/BarbedCrow/book_list/internal/usecase/author"
 )
 
 type mockAuthorSearcher struct {
-	execute func(ctx context.Context, name string) ([]domain.Author, error)
+	execute func(ctx context.Context, name string, limit, offset int) ([]domain.Author, error)
 }
 
-func (m *mockAuthorSearcher) Execute(ctx context.Context, name string) ([]domain.Author, error) {
-	return m.execute(ctx, name)
+func (m *mockAuthorSearcher) Execute(ctx context.Context, name string, limit, offset int) ([]domain.Author, error) {
+	return m.execute(ctx, name, limit, offset)
 }
 
 type mockAuthorDetailer struct {
@@ -48,7 +47,7 @@ func TestAuthorHandler_Search(t *testing.T) {
 			name:  "success",
 			query: "?name=Tolkien",
 			searcher: &mockAuthorSearcher{
-				execute: func(_ context.Context, _ string) ([]domain.Author, error) {
+				execute: func(_ context.Context, _ string, _, _ int) ([]domain.Author, error) {
 					return []domain.Author{{ID: "1", Name: "Tolkien"}}, nil
 				},
 			},
@@ -106,7 +105,7 @@ func TestAuthorHandler_GetDetails(t *testing.T) {
 			id:   "999",
 			detailer: &mockAuthorDetailer{
 				execute: func(_ context.Context, _ string) (domain.Author, error) {
-					return domain.Author{}, authoruc.ErrAuthorNotFound
+					return domain.Author{}, domain.ErrAuthorNotFound
 				},
 			},
 			wantStatus: http.StatusNotFound,

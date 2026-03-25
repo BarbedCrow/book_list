@@ -15,8 +15,8 @@ func NewSearchBooksByTitle(repo BookRepository) *SearchBooksByTitle {
 	return &SearchBooksByTitle{repo: repo}
 }
 
-func (uc *SearchBooksByTitle) Execute(ctx context.Context, title string) ([]domain.Book, error) {
-	books, err := uc.repo.FindByTitle(ctx, title)
+func (uc *SearchBooksByTitle) Execute(ctx context.Context, title string, limit, offset int) ([]domain.Book, error) {
+	books, err := uc.repo.FindByTitle(ctx, title, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("search books by title: %w", err)
 	}

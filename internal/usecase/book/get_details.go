@@ -2,13 +2,10 @@ package book
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/BarbedCrow/book_list/internal/domain"
 )
-
-var ErrBookNotFound = errors.New("book not found")
 
 type GetBookDetails struct {
 	repo BookRepository

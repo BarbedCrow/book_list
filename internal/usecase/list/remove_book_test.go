@@ -40,7 +40,7 @@ func TestRemoveBookFromList(t *testing.T) {
 					return domain.List{ID: "l1", OwnerID: "u1"}, nil
 				},
 			},
-			wantErr: list.ErrNotOwner,
+			wantErr: domain.ErrNotOwner,
 		},
 		{
 			name:   "list not found",
@@ -49,10 +49,10 @@ func TestRemoveBookFromList(t *testing.T) {
 			bookID: "b1",
 			repo: &mockListRepo{
 				findByID: func(_ context.Context, _ string) (domain.List, error) {
-					return domain.List{}, list.ErrListNotFound
+					return domain.List{}, domain.ErrListNotFound
 				},
 			},
-			wantErr: list.ErrListNotFound,
+			wantErr: domain.ErrListNotFound,
 		},
 	}
 

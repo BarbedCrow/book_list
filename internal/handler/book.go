@@ -6,11 +6,10 @@ import (
 	"net/http"
 
 	"github.com/BarbedCrow/book_list/internal/domain"
-	bookuc "github.com/BarbedCrow/book_list/internal/usecase/book"
 )
 
 type BookSearcher interface {
-	Execute(ctx context.Context, title string) ([]domain.Book, error)
+	Execute(ctx context.Context, title string, limit, offset int) ([]domain.Book, error)
 }
 
 type BookDetailer interface {
@@ -33,7 +32,9 @@ func (h *BookHandler) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	books, err := h.search.Execute(r.Context(), title)
+	limit, offset := parsePagination(r)
+
+	books, err := h.search.Execute(r.Context(), title, limit, offset)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
@@ -54,7 +55,7 @@ func (h *BookHandler) GetDetails(w http.ResponseWriter, r *http.Request) {
 
 	b, err := h.details.Execute(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, bookuc.ErrBookNotFound) {
+		if errors.Is(err, domain.ErrBookNotFound) {
 			writeError(w, http.StatusNotFound, "book not found")
 			return
 		}

@@ -2,13 +2,10 @@ package author
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/BarbedCrow/book_list/internal/domain"
 )
-
-var ErrAuthorNotFound = errors.New("author not found")
 
 type GetAuthorDetails struct {
 	repo AuthorRepository

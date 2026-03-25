@@ -18,5 +18,4 @@ type PasswordHasher interface {
 
 type TokenProvider interface {
 	Generate(userID string) (string, error)
-	Validate(token string) (string, error)
 }

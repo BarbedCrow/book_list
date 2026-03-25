@@ -3,6 +3,8 @@ package list
 import (
 	"context"
 	"fmt"
+
+	"github.com/BarbedCrow/book_list/internal/domain"
 )
 
 type RemoveBookFromList struct {
@@ -20,7 +22,7 @@ func (uc *RemoveBookFromList) Execute(ctx context.Context, userID, listID, bookI
 	}
 
 	if l.OwnerID != userID {
-		return ErrNotOwner
+		return domain.ErrNotOwner
 	}
 
 	if err := uc.repo.RemoveBook(ctx, listID, bookID); err != nil {

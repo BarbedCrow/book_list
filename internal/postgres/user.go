@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/BarbedCrow/book_list/internal/domain"
-	useruc "github.com/BarbedCrow/book_list/internal/usecase/user"
 )
 
 type UserRepo struct {
@@ -27,7 +26,7 @@ func (r *UserRepo) FindByEmail(ctx context.Context, email string) (domain.User, 
 		`SELECT id, email, password_hash FROM users WHERE email = $1`, email,
 	).Scan(&u.ID, &u.Email, &u.PasswordHash)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.User{}, useruc.ErrUserNotFound
+		return domain.User{}, domain.ErrUserNotFound
 	}
 	if err != nil {
 		return domain.User{}, fmt.Errorf("user find by email: %w", err)
@@ -43,7 +42,7 @@ func (r *UserRepo) Save(ctx context.Context, u domain.User) error {
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return useruc.ErrDuplicateEmail
+			return domain.ErrDuplicateEmail
 		}
 		return fmt.Errorf("user save: %w", err)
 	}

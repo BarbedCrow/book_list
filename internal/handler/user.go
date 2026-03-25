@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/BarbedCrow/book_list/internal/domain"
-	useruc "github.com/BarbedCrow/book_list/internal/usecase/user"
 )
 
 type UserRegisterer interface {
@@ -41,7 +42,11 @@ type loginResponse struct {
 	Token string `json:"token"`
 }
 
+const maxPasswordBytes = 72
+
 func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
 	var req userRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
@@ -53,9 +58,23 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !isValidEmail(req.Email) {
+		writeError(w, http.StatusBadRequest, "invalid email format")
+		return
+	}
+
+	if utf8.RuneCountInString(req.Password) < 8 {
+		writeError(w, http.StatusBadRequest, "password must be at least 8 characters")
+		return
+	}
+	if len(req.Password) > maxPasswordBytes {
+		writeError(w, http.StatusBadRequest, "password must be at most 72 bytes")
+		return
+	}
+
 	u, err := h.register.Execute(r.Context(), req.Email, req.Password)
 	if err != nil {
-		if errors.Is(err, useruc.ErrDuplicateEmail) {
+		if errors.Is(err, domain.ErrDuplicateEmail) {
 			writeError(w, http.StatusConflict, "email already registered")
 			return
 		}
@@ -67,6 +86,8 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
 	var req userRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
@@ -80,7 +101,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	token, err := h.authenticate.Execute(r.Context(), req.Email, req.Password)
 	if err != nil {
-		if errors.Is(err, useruc.ErrUserNotFound) || errors.Is(err, useruc.ErrWrongPassword) {
+		if errors.Is(err, domain.ErrUserNotFound) || errors.Is(err, domain.ErrWrongPassword) {
 			writeError(w, http.StatusUnauthorized, "invalid credentials")
 			return
 		}
@@ -89,4 +110,16 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, loginResponse{Token: token})
+}
+
+func isValidEmail(email string) bool {
+	at := strings.LastIndex(email, "@")
+	if at < 1 {
+		return false
+	}
+	domainPart := email[at+1:]
+	if len(domainPart) < 3 || !strings.Contains(domainPart, ".") {
+		return false
+	}
+	return true
 }

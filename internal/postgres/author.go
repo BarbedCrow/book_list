@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/BarbedCrow/book_list/internal/domain"
-	authoruc "github.com/BarbedCrow/book_list/internal/usecase/author"
 )
 
 type AuthorRepo struct {
@@ -20,7 +19,7 @@ func NewAuthorRepo(pool *pgxpool.Pool) *AuthorRepo {
 	return &AuthorRepo{pool: pool}
 }
 
-func (r *AuthorRepo) FindByName(ctx context.Context, name string) ([]domain.Author, error) {
+func (r *AuthorRepo) FindByName(ctx context.Context, name string, limit, offset int) ([]domain.Author, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT a.id, a.name, COALESCE(array_agg(b.title) FILTER (WHERE b.title IS NOT NULL), '{}')
 		FROM authors a
@@ -28,7 +27,8 @@ func (r *AuthorRepo) FindByName(ctx context.Context, name string) ([]domain.Auth
 		LEFT JOIN books b ON b.id = ba.book_id
 		WHERE a.name ILIKE '%' || $1 || '%'
 		GROUP BY a.id, a.name
-	`, name)
+		LIMIT $2 OFFSET $3
+	`, name, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("author find by name: %w", err)
 	}
@@ -56,7 +56,7 @@ func (r *AuthorRepo) FindByID(ctx context.Context, id string) (domain.Author, er
 		GROUP BY a.id, a.name
 	`, id).Scan(&a.ID, &a.Name, &a.Books)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.Author{}, authoruc.ErrAuthorNotFound
+		return domain.Author{}, domain.ErrAuthorNotFound
 	}
 	if err != nil {
 		return domain.Author{}, fmt.Errorf("author find by id: %w", err)

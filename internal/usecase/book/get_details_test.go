@@ -32,7 +32,7 @@ func TestGetBookDetails(t *testing.T) {
 			id:   "999",
 			repo: &mockBookRepo{
 				findByID: func(_ context.Context, _ string) (domain.Book, error) {
-					return domain.Book{}, book.ErrBookNotFound
+					return domain.Book{}, domain.ErrBookNotFound
 				},
 			},
 			wantErr: true,

@@ -2,13 +2,9 @@ package list
 
 import (
 	"context"
-	"errors"
 	"fmt"
-)
 
-var (
-	ErrListNotFound = errors.New("list not found")
-	ErrNotOwner     = errors.New("user is not the list owner")
+	"github.com/BarbedCrow/book_list/internal/domain"
 )
 
 type AddBookToList struct {
@@ -26,7 +22,7 @@ func (uc *AddBookToList) Execute(ctx context.Context, userID, listID, bookID str
 	}
 
 	if l.OwnerID != userID {
-		return ErrNotOwner
+		return domain.ErrNotOwner
 	}
 
 	if err := uc.repo.AddBook(ctx, listID, bookID); err != nil {

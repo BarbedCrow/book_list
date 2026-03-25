@@ -6,11 +6,10 @@ import (
 	"net/http"
 
 	"github.com/BarbedCrow/book_list/internal/domain"
-	authoruc "github.com/BarbedCrow/book_list/internal/usecase/author"
 )
 
 type AuthorSearcher interface {
-	Execute(ctx context.Context, name string) ([]domain.Author, error)
+	Execute(ctx context.Context, name string, limit, offset int) ([]domain.Author, error)
 }
 
 type AuthorDetailer interface {
@@ -38,7 +37,9 @@ func (h *AuthorHandler) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authors, err := h.search.Execute(r.Context(), name)
+	limit, offset := parsePagination(r)
+
+	authors, err := h.search.Execute(r.Context(), name, limit, offset)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
@@ -59,7 +60,7 @@ func (h *AuthorHandler) GetDetails(w http.ResponseWriter, r *http.Request) {
 
 	a, err := h.details.Execute(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, authoruc.ErrAuthorNotFound) {
+		if errors.Is(err, domain.ErrAuthorNotFound) {
 			writeError(w, http.StatusNotFound, "author not found")
 			return
 		}

@@ -34,14 +34,18 @@ func run() error {
 	addr := envOrDefault("SERVER_ADDR", ":8080")
 	dbDSN := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		envOrDefault("DB_HOST", "localhost"),
+		requireEnv("DB_HOST"),
 		envOrDefault("DB_PORT", "5432"),
-		envOrDefault("DB_USER", "postgres"),
-		envOrDefault("DB_PASSWORD", "postgres"),
-		envOrDefault("DB_NAME", "book_list"),
+		requireEnv("DB_USER"),
+		requireEnv("DB_PASSWORD"),
+		requireEnv("DB_NAME"),
 		envOrDefault("DB_SSLMODE", "disable"),
 	)
-	jwtSecret := envOrDefault("JWT_SECRET", "change-me-in-production")
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		return fmt.Errorf("JWT_SECRET environment variable is required")
+	}
 	jwtTTL, err := time.ParseDuration(envOrDefault("JWT_TTL", "24h"))
 	if err != nil {
 		return fmt.Errorf("parse JWT_TTL: %w", err)
@@ -123,8 +127,11 @@ func run() error {
 
 	// Server
 	srv := &http.Server{
-		Addr:    addr,
-		Handler: logRequests(mux),
+		Addr:         addr,
+		Handler:      handler.SecurityHeaders(logRequests(mux)),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
 	go func() {
@@ -148,6 +155,15 @@ func envOrDefault(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func requireEnv(key string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		slog.Error("required environment variable is not set", "key", key)
+		os.Exit(1)
+	}
+	return v
 }
 
 func logRequests(next http.Handler) http.Handler {

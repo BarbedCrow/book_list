@@ -2,15 +2,15 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: book_list
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 2s
       timeout: 5s
       retries: 5
@@ -23,7 +23,7 @@ services:
         condition: service_healthy
     command:
       [
-        "host=postgres port=5432 user=postgres password=postgres dbname=book_list sslmode=disable",
+        "host=postgres port=${DB_PORT} user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} sslmode=${DB_SSLMODE}",
         "up",
       ]
 
@@ -35,15 +35,15 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SERVER_ADDR: ":8080"
+      SERVER_ADDR: ${SERVER_ADDR}
       DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: book_list
-      DB_SSLMODE: disable
-      JWT_SECRET: change-me-in-production
-      JWT_TTL: "24h"
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_SSLMODE: ${DB_SSLMODE}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_TTL: ${JWT_TTL}
 
 volumes:
   postgres_data:
