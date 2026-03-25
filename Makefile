@@ -1,10 +1,13 @@
-.PHONY: run test migrate-up migrate-down docker-up docker-down
+.PHONY: run test test-integration migrate-up migrate-down docker-up docker-down
 
 run:
 	go run ./cmd/server
 
 test:
 	go test ./...
+
+test-integration:
+	go test -tags=integration ./internal/postgres/...
 
 docker-up:
 	docker compose up -d
