@@ -9,6 +9,41 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    build:
+      context: ./migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      [
+        "host=postgres port=5432 user=postgres password=postgres dbname=book_list sslmode=disable",
+        "up",
+      ]
+
+  app:
+    build: .
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_ADDR: ":8080"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: book_list
+      DB_SSLMODE: disable
+      JWT_SECRET: change-me-in-production
+      JWT_TTL: "24h"
 
 volumes:
   postgres_data:
