@@ -1,0 +1,28 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build output
+/server
+
+# Environment
+.env
+
+# Temporary files
+tmp/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Claude
+.claude/
+
+# OS
+.DS_Store
