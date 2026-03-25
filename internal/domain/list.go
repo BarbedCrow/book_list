@@ -10,9 +10,9 @@ const (
 )
 
 type List struct {
-	ID      string
-	OwnerID string
-	Name    string
-	Type    ListType
-	Books   []string
+	ID      string   `json:"id"`
+	OwnerID string   `json:"owner_id"`
+	Name    string   `json:"name"`
+	Type    ListType `json:"type"`
+	Books   []string `json:"books"`
 }

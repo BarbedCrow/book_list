@@ -1,7 +1,7 @@
 package domain
 
 type Author struct {
-	ID    string
-	Name  string
-	Books []string
+	ID    string   `json:"id"`
+	Name  string   `json:"name"`
+	Books []string `json:"books"`
 }
