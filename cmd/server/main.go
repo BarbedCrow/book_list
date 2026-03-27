@@ -11,10 +11,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/BarbedCrow/book_list/internal/auth"
 	"github.com/BarbedCrow/book_list/internal/handler"
 	"github.com/BarbedCrow/book_list/internal/hasher"
+	"github.com/BarbedCrow/book_list/internal/monitor"
 	"github.com/BarbedCrow/book_list/internal/postgres"
 	authoruc "github.com/BarbedCrow/book_list/internal/usecase/author"
 	bookuc "github.com/BarbedCrow/book_list/internal/usecase/book"
@@ -66,6 +69,13 @@ func run() error {
 	}
 	slog.Info("connected to database")
 
+	// Metrics
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
+	reg.MustRegister(prometheus.NewGoCollector())
+	reg.MustRegister(monitor.NewPgxPoolCollector(pool))
+	handler.RegisterMetrics(reg)
+
 	// Adapters
 	bookRepo := postgres.NewBookRepo(pool)
 	authorRepo := postgres.NewAuthorRepo(pool)
@@ -102,7 +112,8 @@ func run() error {
 	// Routes
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /health", handler.HealthHandler())
+	mux.HandleFunc("GET /health", handler.HealthHandler(pool))
+	mux.Handle("GET /metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
 	mux.HandleFunc("GET /books", bookHandler.Search)
 	mux.HandleFunc("GET /books/{id}", bookHandler.GetDetails)
@@ -128,7 +139,7 @@ func run() error {
 	// Server
 	srv := &http.Server{
 		Addr:         addr,
-		Handler:      handler.SecurityHeaders(logRequests(mux)),
+		Handler:      handler.MetricsMiddleware(handler.SecurityHeaders(logRequests(mux))),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,

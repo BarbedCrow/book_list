@@ -1,0 +1,54 @@
+groups:
+  - name: book-list
+    rules:
+      - alert: ServiceDown
+        expr: up{job="book-list"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Book List service is down"
+          description: "The book-list target has been unreachable for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total[5m]))
+          > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "More than 5% of requests are returning 5xx errors."
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+          > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p95 request latency"
+          description: "95th percentile latency is above 500ms for 5 minutes."
+
+      - alert: PgxPoolExhausted
+        expr: pgxpool_idle_conns == 0 and pgxpool_acquired_conns > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool has no idle connections"
+          description: "All pool connections are acquired with none idle for over 2 minutes."
+
+      - alert: HighUnauthorizedRate
+        expr: |
+          sum(rate(http_requests_total{status="401"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of 401 Unauthorized responses"
+          description: "More than 1 req/s of 401 responses — possible brute-force or misconfigured client."
